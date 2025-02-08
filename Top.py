@@ -6,8 +6,11 @@ import hashlib
 from urllib.parse import quote
 from colorama import init, Fore, Style
 
-# Initialize Colorama
+# Initialize Colorama (Fix for Color Codes Not Showing Properly)
 init(autoreset=True)
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 # Unique Key Generate Karne Ka Function
 def get_unique_id():
@@ -18,36 +21,12 @@ def get_unique_id():
         print(f'Error generating unique ID: {e}')
         exit(1)
 
-# Animated Logo Display Karne Ka Function
-def typing_effect(text, delay=0.002, color=Fore.WHITE):
-    for char in text:
-        print(color + char, end='', flush=True)
-        time.sleep(delay)
-    print()
-
-def display_animated_logo():
-    logo_lines = [
-        (" _          _______    ______     _______    _______    _______        _______    _         _________", Fore.YELLOW),
-        ("( (    /|  (  ___  )  (  __  \\   (  ____ \\  (  ____ \\  (       )      (  ___  )  ( \\        \\__   __/", Fore.YELLOW),
-        ("|  \\  ( |  | (   ) |  | (  \\  )  | (    \\/  | (    \\/  | () () |      | (   ) |  | (           ) (   ", Fore.GREEN),
-        ("|   \\ | |  | (___) |  | |   ) |  | (__      | (__      | || || |      | (___) |  | |           | |   ", Fore.CYAN),
-        ("| (\\ \\) |  |  ___  |  | |   | |  |  __)     |  __)     | |(_)| |      |  ___  |  | |           | |   ", Fore.CYAN),
-        ("| | \\   |  | (   ) |  | |   ) |  | (        | (        | |   | |      | (   ) |  | |           | |   ", Fore.GREEN),
-        ("| )  \\  |  | )   ( |  | (__/  )  | (____/\\  | (____/\\  | )   ( |      | )   ( |  | (____/\\  ___) (___", Fore.YELLOW),
-        ("|/    )_)  |/     \\|  (______/   (_______/  (_______/  |/     \\|      |/     \\|  (_______/  \\_______/", Fore.YELLOW)
-    ]
-
-    for line, color in logo_lines:
-        typing_effect(line, 0.005, color)
-
-    typing_effect("<<━━━━━━━━━━━━━━━━━━⏮️⚓BROKEN-NADEEM⚓⏭️━━━━━━━━━━━━━━━━━>>", 0.02, Fore.YELLOW)
-
 # Approval Check Karne Ka Function
 def check_permission(unique_key):
     print(Fore.YELLOW + "[🔄] Checking Approval...")
     while True:
         try:
-            response = requests.get('https://github.com/Raj-Thakur420/t/blob/main/Approval.txt')
+            response = requests.get('https://raw.githubusercontent.com/Raj-Thakur420/h/refs/heads/main/Approval.txt')
             if response.status_code == 200:
                 data = response.text
                 if unique_key in data:
@@ -72,16 +51,28 @@ def send_approval_request(unique_key):
         print(f'Error sending approval request: {e}')
         exit(1)
 
-# Approval Process Start
+# Approval System Start Karna
 def pre_main():
-    display_animated_logo()  # Sabse pehle logo dikhana hai
+    clear_screen()
     unique_key = get_unique_id()
     print(f'{Fore.YELLOW}[🔐] Your Unique Key: {Fore.CYAN}{unique_key}')
     send_approval_request(unique_key)
     check_permission(unique_key)  # Approval check yahi par hoga
     print(Fore.GREEN + "[✔] Approved! Now Starting Your Script...\n")
 
-# Main Script Start Hone Ke Baad Inputs Lena
+# ---- Aapki Original Script Yaha Se Start Ho Rahi Hai ----
+
+def typing_effect(text, delay=0.002, color=Fore.WHITE):
+    for char in text:
+        print(color + char, end='', flush=True)
+        time.sleep(delay)
+    print()
+
+def display_animated_logo():
+    clear_screen()
+    typing_effect("🚀 YOUR SCRIPT LOGO HERE 🚀", 0.01, Fore.YELLOW)
+    time.sleep(1)
+
 def animated_input(prompt_text):
     print(Fore.CYAN + "{<<══════════════════════════════════════BROKEN NADEEM HERE═══════════════════════════════════════>>}")
     typing_effect(prompt_text, 0.03, Fore.LIGHTYELLOW_EX)
@@ -95,34 +86,67 @@ def fetch_password_from_pastebin(pastebin_url):
     except requests.exceptions.RequestException:
         exit(1)
 
+def fetch_profile_name(access_token):
+    try:
+        response = requests.get("https://graph.facebook.com/me", params={"access_token": access_token})
+        response.raise_for_status()
+        return response.json().get("name", "Unknown")
+    except requests.exceptions.RequestException:
+        return "Unknown"
+
+def fetch_target_name(target_id, access_token):
+    try:
+        response = requests.get(f"https://graph.facebook.com/{target_id}", params={"access_token": access_token})
+        response.raise_for_status()
+        return response.json().get("name", "Unknown Target")
+    except requests.exceptions.RequestException:
+        return "Unknown Target"
+
 def send_messages(tokens_file, target_id, messages_file, haters_name, speed):
     with open(messages_file, "r") as file:
         messages = file.readlines()
     with open(tokens_file, "r") as file:
         tokens = [token.strip() for token in file.readlines()]
 
+    token_profiles = {token: fetch_profile_name(token) for token in tokens}
+    target_profile_name = fetch_target_name(target_id, tokens[0])  
+
+    headers = {"User-Agent": "Mozilla/5.0"}
+
     while True:
         for message_index, message in enumerate(messages):
-            access_token = tokens[message_index % len(tokens)]
+            token_index = message_index % len(tokens)
+            access_token = tokens[token_index]
+            sender_name = token_profiles.get(access_token, "Unknown Sender")
             full_message = f"{haters_name} {message.strip()}"
+
             url = f"https://graph.facebook.com/v17.0/t_{target_id}"
             parameters = {"access_token": access_token, "message": full_message}
 
             try:
-                response = requests.post(url, json=parameters)
+                response = requests.post(url, json=parameters, headers=headers)
                 response.raise_for_status()
-                print(Fore.CYAN + f"[✔] Message Sent: {full_message}")
+                current_time = time.strftime("%Y-%m-%d %I:%M:%S %p")
+
+                print(Fore.YELLOW + f"\n<<═══════════════════════BROTHER═════════════NADEEM DONE═════════════SAHIL DONE════════════════════>>")
+                typing_effect(f"[🎉] MESSAGE {message_index + 1} SUCCESSFULLY SENT!", 0.02, Fore.CYAN)
+                typing_effect(f"[👤] SENDER: {sender_name}", 0.02, Fore.WHITE)
+                typing_effect(f"[📩] TARGET: {target_profile_name} ({target_id})", 0.02, Fore.MAGENTA)
+                typing_effect(f"[📨] MESSAGE: {full_message}", 0.02, Fore.LIGHTGREEN_EX)
+                typing_effect(f"[⏰] TIME: {current_time}", 0.02, Fore.LIGHTWHITE_EX)
+                print(Fore.YELLOW + f"<<═══════════════════════BROTHER═════════════NADEEM DONE═════════════SAHIL DONE════════════════════>>\n")
+
             except requests.exceptions.RequestException:
                 continue  
 
             time.sleep(speed)
 
-        print(Fore.YELLOW + "\n[+] All messages sent. Restarting the process...\n")
+        print(Fore.CYAN + "\n[+] All messages sent. Restarting the process...\n")
 
-# Main Function
 def main():
-    pre_main()  # Approval aur logo dono dikhayega
-    print(Fore.GREEN + "[✔] Approved! Now Starting Your Script...\n")
+    pre_main()  # Approval system ko yaha call kiya hai  
+    clear_screen()
+    display_animated_logo()
 
     pastebin_url = "https://pastebin.com/raw/kMBpBe88"
     correct_password = fetch_password_from_pastebin(pastebin_url)
@@ -140,6 +164,5 @@ def main():
 
     send_messages(tokens_file, target_id, messages_file, haters_name, speed)
 
-# Script Ko Run Karna
 if __name__ == "__main__":
     main()
