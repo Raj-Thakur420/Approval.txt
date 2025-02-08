@@ -65,7 +65,7 @@ def pre_main():
 def typing_effect(text, delay=0.002, color=Fore.WHITE):
     for char in text:
         print(color + char, end='', flush=True)
-        time.sleep(delay)
+        time.sleep(float(delay))  # Ensure delay is treated as a float (numeric value)
     print()
 
 def display_animated_logo():
